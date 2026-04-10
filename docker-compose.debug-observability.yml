@@ -1,5 +1,3 @@
-version: '3.8'
-
 # Debug profile with observability: backend runs in Docker with Delve
 # so Alloy can discover its logs and ship them to Loki.
 #
@@ -8,6 +6,9 @@ version: '3.8'
 # Then attach VSCode debugger via "Debug Server (Container)" launch config.
 
 services:
+  # Exclude the default mockserver — debug uses local mock via `make run-mock`
+  mockserver:
+    profiles: ["disabled"]
   backend:
     build:
       context: .

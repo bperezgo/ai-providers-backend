@@ -1,5 +1,3 @@
-version: '3.8'
-
 # Debug profile with mock: postgres only (no observability)
 # Usage: docker-compose -f docker-compose.yml -f docker-compose.debug-mock.yml up -d
 #
@@ -11,6 +9,11 @@ version: '3.8'
 # launching "Debug Server (with Mock)".
 
 services:
+  # Exclude backend/mockserver containers (running locally via Delve)
+  mockserver:
+    profiles: ["disabled"]
+  backend:
+    profiles: ["disabled"]
   # Exclude observability services for faster startup
   prometheus:
     profiles: ["observability"]

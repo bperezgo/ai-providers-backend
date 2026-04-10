@@ -185,11 +185,16 @@ obs-down:
 obs-logs:
 	@docker-compose logs -f minio prometheus loki tempo alloy grafana alertmanager
 
-# Start everything (database + observability)
+# Start everything (database + observability + backend + mockserver)
 up:
 	@echo "Starting all services..."
-	@docker-compose up -d
+	@docker-compose up -d --build
 	@echo "All services started"
+	@echo "  Backend:      http://localhost:8080"
+	@echo "  Mock Server:  http://localhost:9999"
+	@echo "  Grafana:      http://localhost:3000 (admin/changeme)"
+	@echo "  Prometheus:   http://localhost:9090"
+	@echo "  Alloy UI:     http://localhost:12345"
 
 # Stop everything
 down:
