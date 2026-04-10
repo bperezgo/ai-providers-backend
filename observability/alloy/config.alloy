@@ -1,0 +1,88 @@
+// ---- Discover Docker containers ----
+discovery.docker "containers" {
+  host = "unix:///var/run/docker.sock"
+}
+
+// ---- Relabel to attach container name as a label ----
+discovery.relabel "containers" {
+  targets = discovery.docker.containers.targets
+
+  rule {
+    source_labels = ["__meta_docker_container_name"]
+    target_label  = "container"
+  }
+}
+
+// ---- Collect logs from Docker containers ----
+loki.source.docker "containers" {
+  host       = "unix:///var/run/docker.sock"
+  targets    = discovery.relabel.containers.output
+  forward_to = [loki.process.pipeline.receiver]
+}
+
+// ---- Process and enrich logs ----
+// Zap JSON format: {"level":"info","ts":...,"msg":"request","status":200,"trace_id":"abc123",...}
+loki.process "pipeline" {
+  // Step 1: Parse JSON fields from the log line
+  stage.json {
+    expressions = {
+      level           = "level",
+      service         = "service",
+      component       = "component",
+      trace_id        = "trace_id",
+      user_id         = "user_id",
+      session_id      = "session_id",
+      request_id      = "request_id",
+    }
+  }
+
+  // Step 2: Set LABELS (low cardinality only)
+  stage.labels {
+    values = {
+      level     = "",
+      service   = "",
+      component = "",
+    }
+  }
+
+  // Step 3: Set STRUCTURED METADATA (high cardinality is fine here)
+  // These fields are indexed and allow fast lookups on S3-backed storage
+  stage.structured_metadata {
+    values = {
+      trace_id        = "",
+      user_id         = "",
+      session_id      = "",
+      request_id      = "",
+    }
+  }
+
+  forward_to = [loki.write.local.receiver]
+}
+
+loki.write "local" {
+  endpoint {
+    url = "http://loki:3100/loki/api/v1/push"
+  }
+}
+
+// ---- Receive OTLP traces from Go app, forward to Tempo ----
+otelcol.receiver.otlp "default" {
+  http {
+    endpoint = "0.0.0.0:4318"
+  }
+  output {
+    traces = [otelcol.processor.batch.default.input]
+  }
+}
+
+otelcol.processor.batch "default" {
+  output {
+    traces = [otelcol.exporter.otlphttp.tempo.input]
+  }
+}
+
+otelcol.exporter.otlphttp "tempo" {
+  client {
+    endpoint = "http://tempo:4318"
+  }
+}

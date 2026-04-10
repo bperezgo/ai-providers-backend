@@ -1,0 +1,10 @@
+with-expecter: true
+packages:
+  github.com/bryanperez/laguna-escondida-marketing/backend/internal/port:
+    interfaces:
+      EvalPersister:
+        config:
+          dir: "internal/port/mocks"
+          filename: "eval_persister.go"
+          mockname: "MockEvalPersister"
+          outpkg: "portmocks"

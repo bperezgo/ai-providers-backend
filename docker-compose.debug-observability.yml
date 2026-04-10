@@ -1,0 +1,37 @@
+version: '3.8'
+
+# Debug profile with observability: backend runs in Docker with Delve
+# so Alloy can discover its logs and ship them to Loki.
+#
+# Usage: docker-compose -f docker-compose.yml -f docker-compose.debug-observability.yml up -d --build
+#
+# Then attach VSCode debugger via "Debug Server (Container)" launch config.
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.debug
+    container_name: ai-backend-server
+    env_file:
+      - .env.mock
+    environment:
+      - GIN_MODE=debug
+      - LOG_LEVEL=debug
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USER=ai_backend
+      - DB_PASSWORD=ai_backend_password
+      - DB_NAME=ai_backend
+      - DB_SSLMODE=disable
+      - PORT=8080
+      - OTEL_METRICS_EXPORTER=prometheus
+      - OTEL_TRACES_EXPORTER=otlp
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://alloy:4318
+      - OTEL_SERVICE_NAME=ai-providers-backend
+    ports:
+      - "8080:8080"   # App
+      - "2345:2345"   # Delve debugger
+    depends_on:
+      postgres:
+        condition: service_healthy

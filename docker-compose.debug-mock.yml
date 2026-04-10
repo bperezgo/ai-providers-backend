@@ -1,0 +1,30 @@
+version: '3.8'
+
+# Debug profile with mock: postgres only (no observability)
+# Usage: docker-compose -f docker-compose.yml -f docker-compose.debug-mock.yml up -d
+#
+# Starts only PostgreSQL. Run the mock server locally via the
+# VSCode compound launch config "Debug Server + Mock" which starts
+# both the mock server and the main server with Delve.
+#
+# Alternatively, run `make run-mock` in a separate terminal before
+# launching "Debug Server (with Mock)".
+
+services:
+  # Exclude observability services for faster startup
+  prometheus:
+    profiles: ["observability"]
+  minio:
+    profiles: ["observability"]
+  minio-init:
+    profiles: ["observability"]
+  loki:
+    profiles: ["observability"]
+  tempo:
+    profiles: ["observability"]
+  alloy:
+    profiles: ["observability"]
+  grafana:
+    profiles: ["observability"]
+  alertmanager:
+    profiles: ["observability"]

@@ -1,0 +1,50 @@
+groups:
+  - name: ai-providers-backend
+    rules:
+      - alert: HighErrorRate
+        expr: |
+          sum(rate(http_requests_total{job="ai-providers-backend",status=~"5.."}[5m]))
+          /
+          sum(rate(http_requests_total{job="ai-providers-backend"}[5m]))
+          > 0.05
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Error rate above 5% for 5 minutes"
+
+      - alert: HighLatency
+        expr: |
+          histogram_quantile(0.99, sum(rate(http_request_duration_seconds_bucket{job="ai-providers-backend"}[5m])) by (le))
+          > 2
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "p99 latency above 2 seconds"
+
+      - alert: ServiceDown
+        expr: up{job="ai-providers-backend"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "AI Providers Backend is unreachable"
+
+      - alert: LowEvalQuality
+        expr: |
+          histogram_quantile(0.5, rate(eval_overall_score_bucket[1h])) < 2.5
+        for: 30m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Median AI image quality score below 2.5 for 30 minutes"
+
+      - alert: HighEvalRetryRate
+        expr: |
+          rate(eval_suggested_retry_total[30m]) > 0.5
+        for: 15m
+        labels:
+          severity: warning
+        annotations:
+          summary: "More than 50% of evaluations suggesting retry"

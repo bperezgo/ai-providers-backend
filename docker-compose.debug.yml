@@ -1,0 +1,26 @@
+version: '3.8'
+
+# Debug profile: only postgres (no mock server)
+# Usage: docker-compose -f docker-compose.yml -f docker-compose.debug.yml up -d
+#
+# This starts only PostgreSQL so you can debug the Go server
+# locally with Delve via VSCode "Debug Server" launch config.
+
+services:
+  # Only postgres is needed — all other services are excluded
+  prometheus:
+    profiles: ["observability"]
+  minio:
+    profiles: ["observability"]
+  minio-init:
+    profiles: ["observability"]
+  loki:
+    profiles: ["observability"]
+  tempo:
+    profiles: ["observability"]
+  alloy:
+    profiles: ["observability"]
+  grafana:
+    profiles: ["observability"]
+  alertmanager:
+    profiles: ["observability"]

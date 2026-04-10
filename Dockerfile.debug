@@ -1,0 +1,15 @@
+FROM golang:1.25.4-alpine
+
+RUN apk add --no-cache git
+RUN go install github.com/go-delve/delve/cmd/dlv@latest
+
+WORKDIR /app
+COPY go.mod go.sum ./
+RUN go mod download
+COPY . .
+
+RUN go build -gcflags="all=-N -l" -o /server ./cmd/server
+
+EXPOSE 8080 2345
+
+CMD ["dlv", "exec", "/server", "--headless", "--listen=:2345", "--api-version=2", "--accept-multiclient", "--continue"]
